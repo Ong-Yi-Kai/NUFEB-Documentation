@@ -1,0 +1,68 @@
+@startuml NUFEB_Class_Topology
+skinparam linetype orth
+skinparam nodesep 40
+skinparam ranksep 40
+hide circle
+skinparam classAttributeIconSize 0
+skinparam classFontSize 16
+skinparam classAttributeFontSize 16
+skinparam packageStyle rectangle
+
+' Force vertical layout
+left to right direction
+together {
+
+package "LAMMPS" {
+  class Pointers
+  class Fix
+  together {
+    class Atom
+    class AtomVec
+  }
+}
+
+package "NUFEB" {
+  class FixDensity
+  class FixDiffusionCoeff
+  class FixDiffusionReaction
+
+  class Grid
+  class GridVec
+  class GridVecChemostat
+
+
+  class AtomVecBacillus
+  class AtomVecCoccus
+
+  class FixDivide
+  class FixDivideCoccus
+
+  class FixGrowth
+  class FixGrowthHET 
+
+}
+
+
+' Inheritance relationships
+Pointers <|-- Atom
+Pointers <|-- AtomVec
+Atom --> AtomVec
+AtomVec <|-- AtomVecBacillus
+AtomVec <|-- AtomVecCoccus
+
+Pointers <|-- Grid
+Pointers <|-- GridVec
+Grid --> GridVec
+GridVec <|-- GridVecChemostat
+
+Pointers <|-- Fix
+Fix <|-- FixDivide
+FixDivide <|-- FixDivideCoccus
+Fix <|-- FixGrowth
+FixGrowth <|-- FixGrowthHET
+Fix <|-- FixDensity
+Fix <|-- FixDiffusionCoeff
+Fix <|-- FixDiffusionReaction
+
+}
+@enduml
