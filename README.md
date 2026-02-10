@@ -362,3 +362,39 @@ grid_style nufeb/chemostat/fluid <nsubs> <sub1> ... <subn> <scale>
 where `<scale>` is the scale factor between mesh grid and simulation box.
 
 3. `CommGridFluid`: Manages the MPI communication between processes to communicate boundary values. `comm_grid_fluid->forward_comm()` is called before the stream step. 
+
+
+## Computing Physical Quantities
+
+Law of similarity says two identical geometries, that have equal dimensionless numbers (such as Reynold's, Perlet's), will have the same behavior, ie invariant of scale. Thus, we expect behavior seen in LBM simulations to be the same as behavior in the physical world, hence physical quantities and lattice quantities are proportional up to a scaling constant. For each physical quantity $Q$, let $\hat{Q}$ be the corresponding lattice quantity that is dimensionless, then there is a conversion factor $C_Q$ such that 
+        $$Q = C_Q \times \hat{Q} $$
+In particular, 
+* Length conversion factor: $C_L = \dfrac{\text{Physical Characteristic Length}}{\text{Lattice Characteristic Length}}$
+* Time conversion factor: $C_T = \dfrac{\text{Physical Characteristic Time}}{\text{Lattice Characteristic Time}}$ 
+* Velocity conversion factor: $C_v = \dfrac{C_L}{C_T}$
+
+Choose $C_L$ for a desired resolution, and we choose $\tau=0.8$ [Zhao 2013](https://doi.org/10.1016/j.camwa.2011.06.005).
+
+$$v_{lat} = v_{phy} \frac{C_L}{C_T}$$
+
+For sanity sake, we check consistency by deriving a relationship between $u_{lat}$ and $u_{phy}$ using the Reynold's number. Reynold's number is a dimensionless constant computed as the ratio of the intertial forces to the viscous forces, 
+        $$Re = \frac{\rho v L}{\mu}$$
+for fluid density $\rho$, flow speed $v$, characteristic linear dimension $L$ and dynamic viscosity of the fluid $\mu$. Since the kinematic viscosity $\nu = \frac{\mu}{\rho}$, then the Reynold's number reduces to 
+        $$Re = \frac{vL}{\nu}$$
+
+The kinematic viscosity of the lattice can be computed by
+    $$\nu = c_s^2 \left(\tau - \frac{1}{2}\right)\Delta t$$
+for a D2Q9 lattice is $\frac{2\tau - 1}{6}$, where it is common for $\Delta x = \Delta t = 1$, which we used in our simulations.
+
+Using the Reynold's number to draw a relation between the physical and dimensionless quantities
+        $$ Re = \frac{v_{phy} L_{phy}}{\nu_{phy}} = \frac{v_{lat}L_{lat}}{\nu_{lat}}$$
+        $$ v_{phy} = \frac{L_{lat}}{L_{phy}} \cdot \frac{\nu_{phy}}{\nu_{lat}} \cdot v_{lat} 
+        = \frac{1}{C_L} \cdot \frac{C_L^2}{C_T} v_{lat}
+        = v_{lat} \frac{C_L}{C_T}$$
+
+where $\frac{L_{lat}}{L_{phy}}$ is the number of lattice nodes representing a characteristic physical length, which can be seen as the resolution of the discretization.
+
+
+If we choose our resolution to be $100$ nodes per $mm$ and let our fluid be water that has a kinematic viscosity of $1\times10^{-6} ~ms^{-2}$, then 
+$$C_T = \frac{\nu_{lat}}{\nu_{phy}} C_L^2 = \frac{\frac{1}{3}\times(0.8 - 0.5)}{1\times10^{-6}} \times \left(\frac{1}{100}\right)^2 = 10$$
+so the velocity conversion is 
